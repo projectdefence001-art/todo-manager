@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TaskFlow — To-Do List Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Satoshi:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#050508;
+  --bg2:#0c0c14;
+  --surface:#12121e;
+  --surface2:#1a1a2e;
+  --surface3:#22223a;
+  --border:rgba(255,255,255,0.06);
+  --border2:rgba(255,255,255,0.1);
+  --border3:rgba(255,255,255,0.18);
+  --text:#f0f0f8;
+  --text2:#9898b8;
+  --text3:#505070;
+  --accent:#7c6dfa;
+  --accent2:#a598fc;
+  --accent3:#5c4ef0;
+  --accent-glow:rgba(124,109,250,0.15);
+  --green:#00e5a0;
+  --green-dim:rgba(0,229,160,0.1);
+  --red:#ff4d7a;
+  --red-dim:rgba(255,77,122,0.1);
+  --amber:#ffb830;
+  --amber-dim:rgba(255,184,48,0.1);
+  --blue:#38bdf8;
+  --r:12px;--r2:10px;--r3:8px;--r4:6px;
+  --font:'Satoshi',sans-serif;
+  --font-head:'Clash Display',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+  --shadow:0 8px 32px rgba(0,0,0,0.4);
+  --shadow2:0 2px 12px rgba(0,0,0,0.3);
+}
+
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* Mesh background */
+body::before{
+  content:'';position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%,rgba(124,109,250,0.06) 0%,transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 80%,rgba(0,229,160,0.04) 0%,transparent 60%),
+    radial-gradient(ellipse 40% 40% at 50% 50%,rgba(56,189,248,0.03) 0%,transparent 60%);
+  pointer-events:none;z-index:0;
+}
+
+/* ── NAVBAR ─────────────────────── */
+nav{
+  position:sticky;top:0;z-index:100;
+  background:rgba(5,5,8,0.85);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  padding:0 2rem;height:64px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.nav-logo{
+  width:32px;height:32px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;
+}
+.nav-name{font-family:var(--font-head);font-size:16px;font-weight:600;color:var(--text);letter-spacing:-0.02em}
+.nav-right{display:flex;align-items:center;gap:12px}
+.nav-tag{font-family:var(--font-mono);font-size:11px;color:var(--text3)}
+.nav-btn{
+  background:var(--accent);border:none;border-radius:var(--r4);
+  padding:7px 16px;color:#fff;font-size:12px;font-weight:600;
+  font-family:var(--font);letter-spacing:0.03em;cursor:pointer;
+  transition:background 0.2s,transform 0.1s;
+}
+.nav-btn:hover{background:var(--accent2)}
+.nav-btn:active{transform:scale(0.97)}
+
+/* ── HERO ──────────────────────── */
+.hero{
+  position:relative;z-index:1;
+  text-align:center;
+  padding:80px 2rem 60px;
+}
+.hero-chip{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--font-mono);font-size:11px;
+  color:var(--accent2);letter-spacing:0.1em;text-transform:uppercase;
+  background:rgba(124,109,250,0.08);
+  border:1px solid rgba(124,109,250,0.2);
+  padding:6px 14px;border-radius:99px;margin-bottom:28px;
+}
+.hero-chip::before{
+  content:'';width:6px;height:6px;border-radius:50%;
+  background:var(--accent2);animation:blink 2s infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.hero h1{
+  font-family:var(--font-head);
+  font-size:clamp(2.8rem,6vw,5rem);
+  font-weight:700;line-height:1.05;
+  letter-spacing:-0.04em;color:var(--text);
+  margin-bottom:20px;
+}
+.hero h1 em{
+  font-style:normal;
+  background:linear-gradient(120deg,var(--accent) 0%,var(--accent2) 50%,var(--green) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hero-sub{
+  font-size:17px;color:var(--text2);line-height:1.75;
+  max-width:500px;margin:0 auto 40px;font-weight:400;
+}
+.hero-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn-primary{
+  background:var(--accent);border:none;border-radius:var(--r2);
+  padding:14px 28px;color:#fff;font-size:14px;font-weight:600;
+  font-family:var(--font);letter-spacing:0.02em;cursor:pointer;
+  transition:all 0.2s;display:flex;align-items:center;gap:8px;
+  box-shadow:0 0 30px rgba(124,109,250,0.3);
+}
+.btn-primary:hover{background:var(--accent2);transform:translateY(-1px);box-shadow:0 0 40px rgba(124,109,250,0.4)}
+.btn-secondary{
+  background:transparent;border:1px solid var(--border2);border-radius:var(--r2);
+  padding:14px 28px;color:var(--text2);font-size:14px;font-weight:500;
+  font-family:var(--font);cursor:pointer;transition:all 0.2s;
+}
+.btn-secondary:hover{border-color:var(--border3);color:var(--text);background:var(--surface)}
+
+/* ── STATS ─────────────────────── */
+.stats-bar{
+  position:relative;z-index:1;
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:12px;padding:0 2rem;max-width:900px;margin:0 auto 60px;
+}
+.stat-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:20px;text-align:center;
+  transition:border-color 0.2s;
+}
+.stat-card:hover{border-color:var(--border2)}
+.stat-num{
+  font-family:var(--font-head);font-size:32px;font-weight:700;
+  letter-spacing:-0.03em;line-height:1;margin-bottom:6px;
+  transition:color 0.3s;
+}
+.stat-lbl{font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3)}
+
+/* ── MAIN APP ──────────────────── */
+.app{
+  position:relative;z-index:1;
+  max-width:900px;margin:0 auto;
+  padding:0 2rem 100px;
+}
+
+/* Add Form */
+.add-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:24px;margin-bottom:20px;
+  box-shadow:var(--shadow2);
+}
+.add-card-title{
+  font-family:var(--font-head);font-size:14px;font-weight:600;
+  color:var(--text2);letter-spacing:0.05em;text-transform:uppercase;
+  margin-bottom:16px;
+}
+.form-row{display:flex;gap:10px;margin-bottom:10px}
+.form-row:last-child{margin-bottom:0}
+.inp{
+  flex:1;background:var(--surface2);
+  border:1px solid var(--border2);border-radius:var(--r2);
+  padding:11px 14px;font-size:14px;font-family:var(--font);
+  color:var(--text);outline:none;
+  transition:border-color 0.2s,box-shadow 0.2s;
+}
+.inp::placeholder{color:var(--text3)}
+.inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,109,250,0.15)}
+select.inp{cursor:pointer}
+.inp-task{font-size:15px;padding:13px 16px}
+.add-btn{
+  background:var(--accent);border:none;border-radius:var(--r2);
+  padding:11px 22px;color:#fff;font-size:13px;font-weight:600;
+  font-family:var(--font);cursor:pointer;white-space:nowrap;
+  transition:background 0.2s,transform 0.1s;
+}
+.add-btn:hover{background:var(--accent2)}
+.add-btn:active{transform:scale(0.97)}
+
+/* Filters */
+.filters-row{
+  display:flex;gap:8px;flex-wrap:wrap;
+  margin-bottom:20px;align-items:center;
+}
+.filters-label{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-right:4px}
+.filter-pill{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:99px;padding:5px 14px;
+  font-size:12px;font-weight:500;color:var(--text2);
+  cursor:pointer;transition:all 0.18s;
+}
+.filter-pill:hover{border-color:var(--border2);color:var(--text)}
+.filter-pill.active{
+  background:rgba(124,109,250,0.12);
+  border-color:rgba(124,109,250,0.35);
+  color:var(--accent2);
+}
+
+/* Task list */
+.tasks-wrap{display:flex;flex-direction:column;gap:8px}
+.section-head{
+  font-size:11px;font-weight:600;letter-spacing:0.1em;
+  text-transform:uppercase;color:var(--text3);
+  padding:10px 0 6px;
+}
+
+/* Task card */
+.task-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:14px 16px;
+  display:flex;align-items:flex-start;gap:12px;
+  transition:border-color 0.2s,background 0.2s,transform 0.15s;
+  cursor:default;
+  animation:slideIn 0.25s ease both;
+}
+@keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.task-card:hover{border-color:var(--border2);transform:translateX(2px)}
+.task-card.done{opacity:0.45}
+.task-card.done .task-title{text-decoration:line-through;color:var(--text3)}
+
+/* Check circle */
+.check{
+  width:20px;height:20px;border-radius:50%;
+  border:1.5px solid var(--border2);flex-shrink:0;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  margin-top:2px;transition:all 0.2s;
+}
+.check:hover{border-color:var(--green)}
+.check.checked{background:var(--green);border-color:var(--green)}
+.check svg{display:none}
+.check.checked svg{display:block}
+
+/* Task body */
+.task-body{flex:1;min-width:0}
+.task-title{font-size:14px;font-weight:500;color:var(--text);margin-bottom:6px;line-height:1.4}
+.task-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.badge{font-size:11px;font-weight:600;padding:2px 9px;border-radius:99px;letter-spacing:0.04em}
+.pri-high{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,77,122,0.2)}
+.pri-medium{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(255,184,48,0.2)}
+.pri-low{background:var(--green-dim);color:var(--green);border:1px solid rgba(0,229,160,0.2)}
+.cat-badge{background:rgba(124,109,250,0.1);color:var(--accent2);border:1px solid rgba(124,109,250,0.2)}
+.due-tag{font-family:var(--font-mono);font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px}
+.due-tag.overdue{color:var(--red)}
+.due-tag.today{color:var(--amber)}
+.due-tag.soon{color:var(--blue)}
+
+/* Task actions */
+.task-actions{display:flex;gap:4px;flex-shrink:0;opacity:0;transition:opacity 0.2s}
+.task-card:hover .task-actions{opacity:1}
+.act-btn{
+  background:transparent;border:none;cursor:pointer;
+  color:var(--text3);padding:4px 6px;border-radius:var(--r4);
+  font-size:13px;line-height:1;transition:all 0.15s;
+}
+.act-btn:hover{color:var(--text);background:var(--surface2)}
+.del-btn:hover{color:var(--red);background:var(--red-dim)}
+
+/* Empty state */
+.empty{
+  text-align:center;padding:60px 20px;
+  color:var(--text3);font-size:14px;
+}
+.empty-icon{font-size:40px;margin-bottom:12px;opacity:0.3}
+
+/* Progress bar */
+.progress-wrap{margin-bottom:24px}
+.progress-label{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:8px}
+.progress-track{height:4px;background:var(--surface2);border-radius:99px;overflow:hidden}
+.progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--green));transition:width 0.4s ease}
+
+/* ── FEATURES SECTION ──────────── */
+.features{
+  position:relative;z-index:1;
+  padding:60px 2rem;max-width:900px;margin:0 auto;
+  border-top:1px solid var(--border);
+}
+.features-title{
+  font-family:var(--font-head);font-size:clamp(1.6rem,3vw,2.4rem);
+  font-weight:700;letter-spacing:-0.03em;color:var(--text);
+  margin-bottom:8px;text-align:center;
+}
+.features-sub{font-size:15px;color:var(--text2);text-align:center;margin-bottom:48px}
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.feature-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:24px;
+  transition:border-color 0.2s,transform 0.2s;
+}
+.feature-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.feat-icon{font-size:24px;margin-bottom:14px}
+.feat-title{font-family:var(--font-head);font-size:15px;font-weight:600;color:var(--text);margin-bottom:8px}
+.feat-desc{font-size:13px;color:var(--text2);line-height:1.65}
+
+/* ── FOOTER ────────────────────── */
+footer{
+  position:relative;z-index:1;
+  text-align:center;padding:32px 2rem;
+  border-top:1px solid var(--border);
+}
+.footer-brand{
+  font-family:var(--font-head);font-size:18px;font-weight:700;
+  color:var(--text);letter-spacing:-0.02em;margin-bottom:8px;
+}
+.footer-note{font-family:var(--font-mono);font-size:11px;color:var(--text3);letter-spacing:0.05em}
+
+/* ── RESPONSIVE ────────────────── */
+@media(max-width:640px){
+  .stats-bar{grid-template-columns:1fr 1fr}
+  .features-grid{grid-template-columns:1fr}
+  .hero h1{font-size:2.4rem}
+  nav{padding:0 1rem}
+  .app,.features{padding-left:1rem;padding-right:1rem}
+  .stats-bar{padding:0 1rem}
+  .form-row{flex-wrap:wrap}
+  .hero-actions{flex-direction:column;align-items:center}
+}
+@media(max-width:420px){
+  .stats-bar{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-brand" href="#">
+    <div class="nav-logo">✓</div>
+    <span class="nav-name">TaskFlow</span>
+  </a>
+  <div class="nav-right">
+    <span class="nav-tag">// v1.0</span>
+    <button class="nav-btn" onclick="document.getElementById('taskInput').focus()">+ New Task</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-chip">Smart Task Management</div>
+  <h1>Organize your work,<br><em>get things done.</em></h1>
+  <p class="hero-sub">A powerful to-do manager with priorities, categories, due dates, and real-time progress tracking — all in one place.</p>
+  <div class="hero-actions">
+    <button class="btn-primary" onclick="document.getElementById('taskInput').focus()">
+      <span>Start Managing Tasks</span><span>→</span>
+    </button>
+    <button class="btn-secondary" onclick="document.getElementById('appSection').scrollIntoView({behavior:'smooth'})">See How It Works</button>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats-bar" id="statsBar"></div>
+
+<!-- APP SECTION -->
+<div class="app" id="appSection">
+
+  <!-- Progress -->
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span id="progressLabel">Overall Progress</span>
+      <span id="progressPct">0%</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  </div>
+
+  <!-- Add Form -->
+  <div class="add-card">
+    <div class="add-card-title">Add New Task</div>
+    <div class="form-row">
+      <input class="inp inp-task" id="taskInput" type="text" placeholder="What needs to be done?" autocomplete="off"/>
+    </div>
+    <div class="form-row">
+      <select class="inp" id="priInput">
+        <option value="high">🔴 High Priority</option>
+        <option value="medium" selected>🟡 Medium Priority</option>
+        <option value="low">🟢 Low Priority</option>
+      </select>
+      <select class="inp" id="catInput">
+        <option value="Work">💼 Work</option>
+        <option value="Study">📚 Study</option>
+        <option value="Personal">🏠 Personal</option>
+        <option value="Health">💪 Health</option>
+        <option value="Finance">💰 Finance</option>
+        <option value="Other">📌 Other</option>
+      </select>
+      <input class="inp" id="dueInput" type="date" style="max-width:180px"/>
+      <button class="add-btn" onclick="addTask()">+ Add Task</button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-row">
+    <span class="filters-label">Filter:</span>
+    <div id="filterPills"></div>
+  </div>
+
+  <!-- Task List -->
+  <div class="tasks-wrap" id="taskList"></div>
+
+</div>
+
+<!-- FEATURES -->
+<div class="features">
+  <div class="features-title">Everything you need</div>
+  <p class="features-sub">Built for students, professionals, and everyone in between.</p>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feat-icon">🎯</div>
+      <div class="feat-title">Priority Levels</div>
+      <div class="feat-desc">Assign High, Medium, or Low priority to every task so you always know what to tackle first.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feat-icon">📁</div>
+      <div class="feat-title">Categories</div>
+      <div class="feat-desc">Organize tasks into Work, Study, Personal, Health, Finance, and more to keep things structured.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feat-icon">📅</div>
+      <div class="feat-title">Due Dates</div>
+      <div class="feat-desc">Set deadlines for every task. Overdue and upcoming tasks are automatically highlighted.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feat-icon">📊</div>
+      <div class="feat-title">Progress Tracking</div>
+      <div class="feat-desc">A live progress bar shows how much you've accomplished at a glance.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feat-icon">⚡</div>
+      <div class="feat-title">Smart Filters</div>
+      <div class="feat-desc">Filter by status, priority, or category instantly to focus on what matters most.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feat-icon">✨</div>
+      <div class="feat-title">Clean & Fast</div>
+      <div class="feat-desc">No clutter, no distractions. Just a fast, beautiful interface that gets out of your way.</div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-brand">TaskFlow</div>
+  <div class="footer-note">// built with ❤️ &nbsp;·&nbsp; all data stays in your browser &nbsp;·&nbsp; free to use</div>
+</footer>
+
+<script>
+const today = new Date(); today.setHours(0,0,0,0);
+document.getElementById('dueInput').value = today.toISOString().split('T')[0];
+
+let tasks = [
+  {id:1,title:'Review Digital Logic Design notes',priority:'high',category:'Study',due:fmt(0),done:false},
+  {id:2,title:'Submit IFT 211 field trip report',priority:'high',category:'Study',due:fmt(0),done:true},
+  {id:3,title:'Morning workout session',priority:'medium',category:'Health',due:fmt(1),done:false},
+  {id:4,title:'Pay electricity bill',priority:'medium',category:'Finance',due:fmt(-1),done:false},
+  {id:5,title:'Buy groceries for the week',priority:'low',category:'Personal',due:fmt(2),done:false},
+];
+let nid=6, filter='all';
+
+function fmt(d){
+  const x=new Date(today);x.setDate(x.getDate()+d);
+  return x.toISOString().split('T')[0];
+}
+
+function dueInfo(due){
+  if(!due)return null;
+  const d=new Date(due);d.setHours(0,0,0,0);
+  const diff=Math.round((d-today)/86400000);
+  if(diff<0)return{label:`${Math.abs(diff)}d overdue`,cls:'overdue'};
+  if(diff===0)return{label:'Due Today',cls:'today'};
+  if(diff===1)return{label:'Due Tomorrow',cls:'soon'};
+  return{label:d.toLocaleDateString('en-US',{month:'short',day:'numeric'}),cls:''};
+}
+
+function getFiltered(){
+  return tasks.filter(t=>{
+    if(filter==='all')return true;
+    if(filter==='active')return !t.done;
+    if(filter==='done')return t.done;
+    if(['high','medium','low'].includes(filter))return t.priority===filter;
+    return t.category===filter;
+  });
+}
+
+function renderFilters(){
+  const cats=['all','active','done','high','medium','low',...new Set(tasks.map(t=>t.category))];
+  const lbl={all:'All',active:'Active',done:'Completed',high:'High',medium:'Medium',low:'Low'};
+  document.getElementById('filterPills').innerHTML=[...new Set(cats)].map(f=>
+    `<span class="filter-pill${filter===f?' active':''}" onclick="setFilter('${f}')" style="margin-right:6px">${lbl[f]||f}</span>`
+  ).join('');
+}
+
+function setFilter(f){filter=f;render()}
+
+function renderStats(){
+  const total=tasks.length,done=tasks.filter(t=>t.done).length;
+  const high=tasks.filter(t=>t.priority==='high'&&!t.done).length;
+  const overdue=tasks.filter(t=>{
+    if(t.done||!t.due)return false;
+    const d=new Date(t.due);d.setHours(0,0,0,0);return d<today;
+  }).length;
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById('statsBar').innerHTML=`
+    <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-lbl">Total Tasks</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--green)">${done}</div><div class="stat-lbl">Completed</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--red)">${high}</div><div class="stat-lbl">Urgent</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--amber)">${overdue}</div><div class="stat-lbl">Overdue</div></div>
+  `;
+  document.getElementById('progressFill').style.width=pct+'%';
+  document.getElementById('progressPct').textContent=pct+'%';
+  document.getElementById('progressLabel').textContent=`${done} of ${total} tasks completed`;
+}
+
+function taskHTML(t){
+  const di=dueInfo(t.due);
+  return`<div class="task-card${t.done?' done':''}" id="tc-${t.id}">
+    <div class="check${t.done?' checked':''}" onclick="toggle(${t.id})">
+      <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+        <path d="M1 4L3.5 6.5L9 1" stroke="#050508" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="task-body">
+      <div class="task-title">${t.title}</div>
+      <div class="task-meta">
+        <span class="badge pri-${t.priority}">${t.priority}</span>
+        <span class="badge cat-badge">${t.category}</span>
+        ${di?`<span class="due-tag ${di.cls}">📅 ${di.label}</span>`:''}
+      </div>
+    </div>
+    <div class="task-actions">
+      <button class="act-btn del-btn" onclick="del(${t.id})" title="Delete">✕</button>
+    </div>
+  </div>`;
+}
+
+function render(){
+  renderFilters();renderStats();
+  const filtered=getFiltered();
+  const el=document.getElementById('taskList');
+  if(!filtered.length){
+    el.innerHTML=`<div class="empty"><div class="empty-icon">✓</div><div>No tasks here. Add one above!</div></div>`;
+    return;
+  }
+  const pending=filtered.filter(t=>!t.done),done=filtered.filter(t=>t.done);
+  let html='';
+  if(pending.length)html+=`<div class="section-head">Pending — ${pending.length}</div>`+pending.map(taskHTML).join('');
+  if(done.length)html+=`<div class="section-head">Completed — ${done.length}</div>`+done.map(taskHTML).join('');
+  el.innerHTML=html;
+}
+
+function addTask(){
+  const title=document.getElementById('taskInput').value.trim();
+  if(!title)return;
+  tasks.unshift({
+    id:nid++,title,
+    priority:document.getElementById('priInput').value,
+    category:document.getElementById('catInput').value,
+    due:document.getElementById('dueInput').value,
+    done:false
+  });
+  document.getElementById('taskInput').value='';
+  filter='all';render();
+}
+
+function toggle(id){const t=tasks.find(t=>t.id===id);if(t)t.done=!t.done;render()}
+function del(id){tasks=tasks.filter(t=>t.id!==id);render()}
+
+document.getElementById('taskInput').addEventListener('keydown',e=>{if(e.key==='Enter')addTask()});
+
+render();
+</script>
+</body>
+</html>
